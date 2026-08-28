@@ -1,3 +1,6 @@
+# 既定は素直に扱う。**後の行が勝つ**ので、この行を先に置くこと。
+* text=auto
+
 # 出荷データは 1 バイトも変換させない。
 #
 # 本文の添字と接尾辞配列は 1 対 1 に対応している。改行が LF から CRLF に変わると
@@ -7,6 +10,3 @@
 web/data/*.txt   -text
 web/data/*.bin   -text binary
 web/data/*.json  -text
-
-# 原稿は素直に扱う
-* text=auto
