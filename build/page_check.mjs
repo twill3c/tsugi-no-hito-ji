@@ -11,7 +11,11 @@
 //   4. つまみを動かすと、切り落とされた候補の数が実際に変わる
 //   5. フリート規約のフッタが 5 項目そろっている
 //
-// usage: node build/page_check.mjs [--shot <png>]
+// **本番にも向けられる。** ローカルで緑でも、出荷から漏れたファイルがあれば本番だけが壊れる
+// (実際 .vercelignore の data/ が web/data/ にも当たり、本番でコーパスが 404 になった)。
+// トップページは 200 を返し続けるので、URL の生存確認では気づけない。
+//
+// usage: node build/page_check.mjs [--shot <png>] [--url https://...]
 
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
@@ -33,6 +37,9 @@ const TYPES = {
 const problems = [];
 const ok = (cond, msg) => { if (!cond) problems.push(msg); };
 
+const urlAt = process.argv.indexOf("--url");
+const remote = urlAt > 0 ? process.argv[urlAt + 1] : null;
+
 const server = createServer(async (req, res) => {
   const url = decodeURIComponent(req.url.split("?")[0]);
   const path = normalize(join(WEB, url === "/" ? "index.html" : url));
@@ -46,7 +53,8 @@ const server = createServer(async (req, res) => {
   }
 });
 await new Promise((r) => server.listen(0, r));
-const base = `http://127.0.0.1:${server.address().port}/`;
+const base = remote || `http://127.0.0.1:${server.address().port}/`;
+if (remote) console.log(`検品先: ${remote}`);
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1100, height: 1400 } });
@@ -54,6 +62,11 @@ const page = await browser.newPage({ viewport: { width: 1100, height: 1400 } });
 const consoleErrors = [];
 page.on("console", (m) => { if (m.type() === "error") consoleErrors.push(m.text()); });
 page.on("pageerror", (e) => consoleErrors.push(String(e)));
+// 取得できなかった資源は、画面が「読み込み中」のまま止まる形で現れる。
+// 何が落ちたのかを名指しできるよう、応答コードで拾っておく
+page.on("response", (r) => {
+  if (r.status() >= 400) consoleErrors.push(`${r.status()} ${r.url()}`);
+});
 
 await page.goto(base, { waitUntil: "load" });
 await page.waitForSelector("#p-board:not([hidden])", { timeout: 30000 });
@@ -85,7 +98,7 @@ ok(Math.abs(sums.trace - 100) < 0.6, `表の寄与の合計が ${sums.trace.toFi
 // 3. 表の「出現 n」を、本文の素朴な数え直しと突き合わせる。
 //    画面の数字はモデル経由で出ているので、こちらは indexOf で数える別経路にする
 const nCheck = await page.evaluate(async () => {
-  const text = await fetch("data/soseki.txt").then((r) => r.text());
+  const text = await fetch("data/soseki.txt").then((r) => { if (!r.ok) throw new Error(`本文が取れない: ${r.status}`); return r.text(); });
   const rows = [...document.querySelectorAll("#trace tbody tr")].slice(1);
   const out = [];
   for (const tr of rows) {

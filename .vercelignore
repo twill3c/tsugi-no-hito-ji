@@ -1,9 +1,12 @@
-build/
-tests/
-data/
-logs/
-harness/
-schema/
-node_modules/
-.wt/
-.scaffold/
+# **先頭スラッシュで根に固定すること。** `data/` と書くと web/data/ にも当たり、
+# 出荷すべきコーパスが丸ごと落ちて本番が 404 になる(トップページは 200 のままなので
+# 生存確認では気づけない)。
+/build/
+/tests/
+/data/
+/logs/
+/harness/
+/schema/
+/node_modules/
+/.wt/
+/.scaffold/
