@@ -1,0 +1,13 @@
+{
+  "name": "tsugi-no-hito-ji",
+  "private": true,
+  "type": "module",
+  "description": "次の一字 — 文字言語モデルの中身をぜんぶ見せる。出荷物は web/ の静的ファイルだけで、ここの依存は検品にしか使わない",
+  "scripts": {
+    "check": "node build/page_check.mjs",
+    "dump": "node build/js_dump.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}

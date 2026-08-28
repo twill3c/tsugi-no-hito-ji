@@ -1,0 +1,26 @@
+{
+  "soseki": {
+    "bits": 5.523,
+    "ppl": 45.98,
+    "held_chars": 20000,
+    "oov": 99
+  },
+  "dazai": {
+    "bits": 4.8203,
+    "ppl": 28.25,
+    "held_chars": 20000,
+    "oov": 20
+  },
+  "kenji": {
+    "bits": 6.3226,
+    "ppl": 80.04,
+    "held_chars": 2723,
+    "oov": 14
+  },
+  "mixed": {
+    "bits": 6.1669,
+    "ppl": 71.85,
+    "held_chars": 20000,
+    "oov": 87
+  }
+}

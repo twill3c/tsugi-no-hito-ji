@@ -1,0 +1,9 @@
+build/
+tests/
+data/
+logs/
+harness/
+schema/
+node_modules/
+.wt/
+.scaffold/

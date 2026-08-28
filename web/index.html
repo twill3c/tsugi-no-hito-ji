@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>次の一字 — 文字言語モデルの中身をぜんぶ見せる</title>
+<meta name="description" content="青空文庫で組んだ文字 n-gram 言語モデルの、次の一字の確率分布・温度・top-k・top-p を全部見せる。文脈は長いほど当たるのか、人間とモデルはどちらがよく当てるのかを実測する。">
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='26' font-size='26'%3E%F0%9F%94%A4%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>次の一字<span class="en">tsugi-no-hito-ji</span></h1>
+  <p class="lede">
+    青空文庫で組んだ文字言語モデルが、次に来る一字をどう見積もっているか。
+    確率の棒も、効いている文脈も、温度で分布が溶けていく様子も、隠さず全部出す。
+    モデルの中身は本文そのもので、外部への通信は一切しない。
+  </p>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="画面の切り替え">
+  <button role="tab" id="tab-board" aria-controls="p-board" aria-selected="true">予測盤</button>
+  <button role="tab" id="tab-peak" aria-controls="p-peak" aria-selected="false">文脈の山</button>
+  <button role="tab" id="tab-game" aria-controls="p-game" aria-selected="false">かなあて勝負</button>
+  <button role="tab" id="tab-about" aria-controls="p-about" aria-selected="false">たねあかし</button>
+</nav>
+
+<p id="boot" class="busy">本文と索引を読み込んでいます…</p>
+
+<!-- ================= 予測盤 ================= -->
+<section id="p-board" role="tabpanel" aria-labelledby="tab-board" hidden>
+
+  <div class="card">
+    <h2>読ませる本</h2>
+    <p class="note">モデルは読んだものでできている。本を替えると、同じ書き出しでも次の一字が変わる。</p>
+    <div class="row">
+      <select id="corpus" aria-label="コーパス"></select>
+      <span id="corpus-note" class="busy"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>書き出し</h2>
+    <p class="note">末尾の文字列が「文脈」になる。長い引用を入れるほど、長い文脈が効く。</p>
+    <textarea id="prompt" rows="3" spellcheck="false">吾輩は</textarea>
+    <div class="row" style="margin-top:.6rem">
+      <button class="act" id="btn-step">次の一字を書く</button>
+      <button class="act" id="btn-run">20 字つづける</button>
+      <button class="act" id="btn-reset">戻す</button>
+      <label class="field" style="margin:0">
+        <span class="k" style="min-width:auto">たね</span>
+        <input type="text" id="seed" value="7" size="6" inputmode="numeric">
+      </label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>次の一字の分布</h2>
+    <p class="note" id="dist-note"></p>
+    <div class="bars" id="bars"></div>
+    <p class="note" style="margin:.7rem 0 0">
+      薄い棒は top-k / top-p で切り落とされた候補。切られた字はサンプリングで選ばれない。
+    </p>
+    <div class="stat" id="dist-stat"></div>
+  </div>
+
+  <div class="card">
+    <h2>つまみ</h2>
+    <p class="note">出口の 3 つ。分布そのものは変えず、そこからどう選ぶかだけを変える。</p>
+    <label class="field"><span class="k">温度 T</span>
+      <input type="range" id="temp" min="0" max="200" value="80">
+      <output class="val" id="temp-v">0.80</output>
+      <span class="busy" id="temp-hint"></span>
+    </label>
+    <label class="field"><span class="k">top-k</span>
+      <input type="range" id="topk" min="0" max="60" value="0">
+      <output class="val" id="topk-v">制限なし</output>
+    </label>
+    <label class="field"><span class="k">top-p</span>
+      <input type="range" id="topp" min="10" max="100" value="100">
+      <output class="val" id="topp-v">制限なし</output>
+      <span class="busy" id="topp-hint"></span>
+    </label>
+    <label class="field"><span class="k">文脈の上限 L</span>
+      <input type="range" id="order" min="0" max="8" value="8">
+      <output class="val" id="order-v">8 文字</output>
+    </label>
+  </div>
+
+  <div class="card">
+    <h2>どの長さの文脈が効いているか</h2>
+    <p class="note">
+      短い文脈から順に混ぜ上げてある。長い文脈は、出てきた回数が多いときだけ強く効く。
+      帯の幅は、最後の確率のうち各段が持っている割合そのもの。
+    </p>
+    <div class="stack" id="stack" role="img" aria-label="文脈の長さごとの寄与"></div>
+    <div class="legend" id="stack-legend"></div>
+    <div class="scroll-x">
+      <table class="trace" id="trace">
+        <thead><tr><th>長さ</th><th>文脈</th><th>出現 n</th><th>種類 u</th><th>譲る率 γ</th><th>寄与</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <details>
+      <summary>混ぜ方の式</summary>
+      <p>
+        p<sub>0</sub>(c) = (N<sub>c</sub> + 1) / (N + V + 1)、
+        p<sub>m</sub>(c) = max(k<sub>m</sub>(c) − D, 0) / n<sub>m</sub> + γ<sub>m</sub> · p<sub>m−1</sub>(c)、
+        γ<sub>m</sub> = D · u<sub>m</sub> / n<sub>m</sub>、D = <span id="disc-v"></span>。
+        見た回数から D を引き、引いた分をまとめて短い文脈に譲る。
+        1 回しか出ていない文脈はほとんど信じない。
+      </p>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2>書けたもの</h2>
+    <p class="note">たねが同じなら、何度やっても一字も違わない。</p>
+    <div class="gen" id="gen"></div>
+  </div>
+</section>
+
+<!-- ================= 文脈の山 ================= -->
+<section id="p-peak" role="tabpanel" aria-labelledby="tab-peak" hidden>
+
+  <div class="card">
+    <h2>文脈は長いほど当たる、のか</h2>
+    <p class="note">
+      学習にも調整にも使っていない別の作品を読ませて、1 文字あたり何ビット必要かを測る。
+      小さいほど「よく当たっている」。
+    </p>
+    <div class="row">
+      <button class="act primary" id="btn-curve">いまの本で測る</button>
+      <span class="busy" id="curve-busy"></span>
+    </div>
+    <figure><div id="curve"></div><figcaption id="curve-cap"></figcaption></figure>
+  </div>
+
+  <div class="card">
+    <h2>山の位置は、読んだ量で決まる</h2>
+    <p class="note">
+      同じ本の先頭 N 字だけを読ませたモデルを、N を変えて並べたもの(事前に計算した値)。
+      読んだ量が増えるほど曲線全体が下がり、谷の位置が右へ動く。
+    </p>
+    <figure><div id="scaling"></div><figcaption id="scaling-cap"></figcaption></figure>
+    <div class="scroll-x"><table class="trace" id="scaling-tab">
+      <thead><tr><th>読んだ字数</th><th>最良の文脈長</th><th>L=2</th><th>L=3</th><th>差(L3−L2)</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <details>
+      <summary>なぜ長すぎる文脈は効かないのか</summary>
+      <p>
+        40 万字の中で 8 文字の並びがぴったり一致することは、ほとんど起きない。
+        起きたとしても 1 回か 2 回で、その 1 回に続いた字が次も来るとは限らない。
+        つまり長い文脈は「覚えている」だけで「分かっている」わけではない。
+        混ぜ方の式が長い文脈をほとんど信じないのはこのためで、それでもなお、
+        4 文字を超えると当たらなくなる。<b>効く文脈の長さは、読んだ量が決めている。</b>
+      </p>
+    </details>
+  </div>
+</section>
+
+<!-- ================= かなあて勝負 ================= -->
+<section id="p-game" role="tabpanel" aria-labelledby="tab-game" hidden>
+
+  <div class="card">
+    <h2>次のひらがなを当てる</h2>
+    <p class="note">
+      シャノンが 1951 年に英文でやった実験の日本語版。伏せた一字を、当たるまで何度でも言う。
+      同じ問題をモデルにも解かせて、<b>何回目で当たったか</b>の分布から両者のビット数を挟む。
+      出題は学習にも調整にも使っていない作品から、次の一字がひらがなの位置だけを選ぶ。
+    </p>
+    <div class="row">
+      <button class="act primary" id="btn-quiz">はじめる</button>
+      <span class="busy" id="quiz-progress"></span>
+    </div>
+    <div id="quiz-area" hidden>
+      <p class="quiz" id="quiz-text"></p>
+      <p class="busy" id="quiz-hint"></p>
+      <div class="kana-grid" id="kana"></div>
+    </div>
+    <div class="tally" id="tally" hidden></div>
+    <figure id="quiz-fig" hidden><div id="quiz-chart"></div><figcaption id="quiz-cap"></figcaption></figure>
+    <details>
+      <summary>推測回数からビット数を挟む式</summary>
+      <p>
+        i 回目で当たった割合を q<sub>i</sub> とすると、
+        下界 = Σ<sub>i</sub> i (q<sub>i</sub> − q<sub>i+1</sub>) log₂ i、
+        上界 = − Σ<sub>i</sub> q<sub>i</sub> log₂ q<sub>i</sub>。
+        中の確率を聞き出さなくても、当てっこの成績だけで外側から挟める。
+        人間に確率を聞けない以上、人間の側はこの形でしか測れない。
+      </p>
+    </details>
+  </div>
+</section>
+
+<!-- ================= たねあかし ================= -->
+<section id="p-about" role="tabpanel" aria-labelledby="tab-about" hidden>
+  <div class="card">
+    <h2>読ませている本</h2>
+    <p class="note">
+      青空文庫の新字新仮名の作品から採録。ルビ・注記・底本表記は落としてある。
+      各コーパスから 2 作を抜いてあり、1 作はつまみの調整に、もう 1 作は数字の報告にだけ使う。
+    </p>
+    <div class="scroll-x"><table class="trace" id="about-corpora">
+      <thead><tr><th>本</th><th>字数</th><th>字種</th><th>作品数</th><th>調整用</th><th>報告用</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h2>モデルファイルは配っていない</h2>
+    <p class="note">確率の表を焼き込む代わりに、本文と接尾辞配列を配って、その場で数えている。</p>
+    <p>
+      おかげで文脈の長さに上限が無く、画面に出ている「出現 n 回」は本文を実際に数えた数そのものになる。
+      同じ数を 3 通り(走査の表・配列を舐める・二分探索だけ)で数えて、
+      一致することをテストで確かめてある。
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>測って捨てたもの</h2>
+    <p>
+      最初は「文脈は長いほど当たる」を目玉にするつもりだった。
+      ところが混ぜ方を 2 通り・割引を 11 通り試しても、
+      <b>4 文字を超えると必ず当たらなくなる</b>。主張のほうを捨てて、
+      代わりに「山の位置は読んだ量で決まる」を目玉にした。経緯は
+      リポジトリの <code>HARNESS_CHANGELOG.md</code>(HC-001)に残してある。
+    </p>
+  </div>
+</section>
+
+</div>
+
+<nav class="foot-bar">
+  <a href="https://github.com/twill3c/tsugi-no-hito-ji/blob/main/LICENSE">MIT License</a> © 2026 坂田哲朗
+  <a href="https://github.com/twill3c/tsugi-no-hito-ji">GitHub</a>
+  <a href="https://github.com/twill3c/tsugi-no-hito-ji/blob/main/README.md">次の一字の遊び方</a>
+  <a href="https://github.com/twill3c/tsugi-no-hito-ji/blob/main/SPEC.md">次の一字 設計図</a>
+  <a href="https://app-menu-amber.vercel.app/">App Menu</a>
+</nav>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

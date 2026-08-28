@@ -1,0 +1,188 @@
+/* 次の一字 — 依存ゼロ。配色も字組みもこのファイルで完結する。 */
+
+:root {
+  color-scheme: light;
+
+  --plane:     #f9f9f7;
+  --surface:   #fcfcfb;
+  --surface-2: #f2f1ed;
+  --ink:       #0b0b0b;
+  --ink-2:     #52514e;
+  --ink-muted: #898781;
+  --hair:      #e1e0d9;
+  --axis:      #c3c2b7;
+  --ring:      rgba(11, 11, 11, 0.10);
+
+  --accent:  #256abf;
+  --human:   #2a78d6;   /* 人間の成績 */
+  --machine: #eb6834;   /* モデルの成績 */
+  --danger:  #d03b3b;
+  --ok:      #2f7d4f;
+
+  /* 文脈の長さ 0..8 の帯。長いほど濃い青。同じ順に凡例も並べる */
+  --o0: #dfe6ef; --o1: #c4d6ea; --o2: #a3c2e3; --o3: #7fabda;
+  --o4: #5b92cf; --o5: #3d79bd; --o6: #2b62a2; --o7: #204c81; --o8: #173861;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --plane: #0d0d0d; --surface: #1a1a19; --surface-2: #232322;
+    --ink: #ffffff; --ink-2: #c3c2b7; --ink-muted: #898781;
+    --hair: #2c2c2a; --axis: #383835; --ring: rgba(255, 255, 255, 0.10);
+    --accent: #3987e5; --human: #3987e5; --machine: #d95926;
+    --danger: #e05a5a; --ok: #4f9d6f;
+    --o0: #26313d; --o1: #2c4058; --o2: #325075; --o3: #386191;
+    --o4: #3f72ad; --o5: #5388c2; --o6: #6f9fd1; --o7: #8fb7de; --o8: #b0cdea;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --plane: #0d0d0d; --surface: #1a1a19; --surface-2: #232322;
+  --ink: #ffffff; --ink-2: #c3c2b7; --ink-muted: #898781;
+  --hair: #2c2c2a; --axis: #383835; --ring: rgba(255, 255, 255, 0.10);
+  --accent: #3987e5; --human: #3987e5; --machine: #d95926;
+  --danger: #e05a5a; --ok: #4f9d6f;
+  --o0: #26313d; --o1: #2c4058; --o2: #325075; --o3: #386191;
+  --o4: #3f72ad; --o5: #5388c2; --o6: #6f9fd1; --o7: #8fb7de; --o8: #b0cdea;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0 0 7.5rem;
+  background: var(--plane);
+  color: var(--ink);
+  font-family: "Hiragino Sans", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+  -webkit-text-size-adjust: 100%;
+}
+
+.wrap { max-width: 980px; margin: 0 auto; padding: 0 1rem; }
+
+header { padding: 2.5rem 0 1rem; }
+h1 { font-size: 1.9rem; margin: 0 0 .35rem; letter-spacing: .02em; }
+h1 .en { font-size: .95rem; color: var(--ink-muted); font-weight: 400; margin-left: .6rem; }
+.lede { color: var(--ink-2); margin: 0; max-width: 60ch; }
+
+nav.tabs { display: flex; gap: .4rem; flex-wrap: wrap; margin: 1.4rem 0 1rem; }
+nav.tabs button {
+  font: inherit; padding: .45rem .95rem; border-radius: 999px;
+  border: 1px solid var(--hair); background: var(--surface); color: var(--ink-2);
+  cursor: pointer;
+}
+nav.tabs button[aria-selected="true"] {
+  background: var(--ink); color: var(--plane); border-color: var(--ink);
+}
+
+section[hidden] { display: none; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--hair);
+  border-radius: 12px; padding: 1.1rem 1.15rem; margin: 0 0 1.1rem;
+}
+.card > h2 { font-size: 1.05rem; margin: 0 0 .2rem; }
+.card > .note { color: var(--ink-muted); font-size: .87rem; margin: 0 0 .9rem; }
+
+label.field { display: block; font-size: .85rem; color: var(--ink-2); margin-bottom: .5rem; }
+label.field > span.k { display: inline-block; min-width: 9.5rem; }
+input[type="range"] { vertical-align: middle; width: min(280px, 55vw); }
+output.val { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+
+select, input[type="text"], textarea {
+  font: inherit; color: var(--ink); background: var(--surface-2);
+  border: 1px solid var(--hair); border-radius: 8px; padding: .45rem .6rem;
+}
+textarea { width: 100%; resize: vertical; line-height: 1.9; }
+button.act {
+  font: inherit; padding: .45rem .9rem; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--hair); background: var(--surface-2); color: var(--ink);
+}
+button.act:hover { border-color: var(--axis); }
+button.act.primary { background: var(--ink); color: var(--plane); border-color: var(--ink); }
+button.act:disabled { opacity: .45; cursor: default; }
+
+.row { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; }
+
+/* ---- 次の一字の棒 ---- */
+.bars { display: grid; grid-template-columns: 2.2rem 1fr 4.6rem; gap: .18rem .5rem; align-items: center; }
+.bars .ch { font-size: 1.15rem; text-align: center; font-feature-settings: "palt"; }
+.bars .ch.nl { font-size: .8rem; color: var(--ink-muted); }
+.bars .track { background: var(--surface-2); border-radius: 4px; height: 1.05rem; overflow: hidden; }
+.bars .fill { height: 100%; background: var(--accent); }
+.bars .pct { font-variant-numeric: tabular-nums; font-size: .82rem; color: var(--ink-2); text-align: right; }
+.bars .cut { opacity: .3; }
+
+/* ---- 文脈の帯 ---- */
+.stack { display: flex; height: 1.6rem; border-radius: 6px; overflow: hidden; border: 1px solid var(--hair); }
+.stack > div { min-width: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: .3rem .9rem; margin-top: .55rem; font-size: .8rem; color: var(--ink-2); }
+.legend i { display: inline-block; width: .8rem; height: .8rem; border-radius: 2px; margin-right: .3rem; vertical-align: -1px; }
+
+table.trace { width: 100%; border-collapse: collapse; font-size: .84rem; margin-top: .8rem; }
+table.trace th, table.trace td { border-bottom: 1px solid var(--hair); padding: .3rem .4rem; text-align: right; }
+table.trace th:first-child, table.trace td:first-child { text-align: left; }
+table.trace td.ctx { font-family: ui-monospace, monospace; color: var(--ink); }
+table.trace tbody tr.dead td { color: var(--ink-muted); }
+.scroll-x { overflow-x: auto; }
+
+.stat { display: flex; gap: 1.6rem; flex-wrap: wrap; margin: .8rem 0 0; }
+.stat div { font-size: .84rem; color: var(--ink-muted); }
+.stat b { display: block; font-size: 1.25rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+.gen { background: var(--surface-2); border-radius: 8px; padding: .8rem .9rem; line-height: 2; min-height: 3rem; }
+.gen .seed { color: var(--ink-muted); }
+
+/* ---- 曲線 ---- */
+figure { margin: 0; }
+figcaption { font-size: .82rem; color: var(--ink-muted); margin-top: .5rem; }
+svg { display: block; width: 100%; height: auto; }
+svg text { font-size: 11px; fill: var(--ink-2); }
+svg .grid { stroke: var(--hair); stroke-width: 1; }
+svg .axis { stroke: var(--axis); stroke-width: 1; }
+svg .mark { fill: none; stroke-width: 2; }
+svg .peak { fill: var(--danger); }
+
+/* ---- かなあて ---- */
+.kana-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: .25rem; margin-top: .7rem; }
+.kana-grid button {
+  font: inherit; font-size: 1.05rem; padding: .4rem 0; cursor: pointer;
+  border: 1px solid var(--hair); border-radius: 6px; background: var(--surface-2); color: var(--ink);
+}
+.kana-grid button.used { opacity: .3; }
+.kana-grid button:disabled { cursor: default; }
+.quiz { font-size: 1.05rem; line-height: 2.1; background: var(--surface-2); border-radius: 8px; padding: .8rem .9rem; }
+.quiz .blank { display: inline-block; min-width: 1.4em; border-bottom: 2px solid var(--accent); text-align: center; }
+.quiz .after { color: var(--ink-muted); }
+.tally { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+.tally .who { font-size: .8rem; color: var(--ink-muted); }
+.tally .who.h { color: var(--human); }
+.tally .who.m { color: var(--machine); }
+
+.warn { color: var(--danger); }
+.busy { color: var(--ink-muted); font-size: .85rem; }
+
+details { margin-top: .8rem; font-size: .87rem; }
+details summary { cursor: pointer; color: var(--ink-2); }
+details p, details ul { color: var(--ink-2); }
+
+/* fleet: fixed footer */
+.foot-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  background: var(--surface); border-top: 1px solid var(--hair);
+  padding: .5rem 1rem; text-align: center; font-size: .78rem; color: var(--ink-muted);
+}
+.foot-bar a { color: var(--ink-2); text-decoration: none; }
+.foot-bar a:hover { text-decoration: underline; }
+.foot-bar a:not(:first-of-type)::before { content: " ・ "; color: var(--ink-muted); }
+
+@media (max-width: 620px) {
+  body { padding-bottom: 8.5rem; }
+  .tally { grid-template-columns: 1fr; }
+  .kana-grid { grid-template-columns: repeat(8, 1fr); }
+  .bars { grid-template-columns: 2rem 1fr 3.6rem; }
+  input[type="range"] { width: min(220px, 60vw); }
+}
