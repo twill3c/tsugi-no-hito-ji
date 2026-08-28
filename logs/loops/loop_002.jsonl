@@ -1,1 +1,11 @@
 {"v": "1.2", "ts": "2026-08-29T08:18:04+09:00", "project": "tsugi-no-hito-ji", "loop_id": "loop_002", "event": "loop_start", "data": {"goal": "解説アーティファクト(歩き方・設計図)を発行し、フリート規約フッタの 3・4 番目を GitHub リンクから差し替える", "spec_refs": ["フリート共通フッタ規約"], "scaffold_version": "1.13.0", "agent": "claude-opus-5"}}
+{"v": "1.2", "ts": "2026-08-29T08:22:14+09:00", "project": "tsugi-no-hito-ji", "loop_id": "loop_002", "event": "test_run", "data": {"command": "node build/page_check.mjs --url https://tsugi-no-hito-ji.vercel.app/", "suite": "browser", "total": 8, "passed": 8, "failed": 0, "stage": 5, "note": "本番のフッタが解説アーティファクトを指していることを確認"}}
+{"v": "1.2", "ts": "2026-08-29T08:22:14+09:00", "project": "tsugi-no-hito-ji", "loop_id": "loop_002", "event": "stage_end", "data": {"stage": 1, "stage_name": "計画", "result": "pass"}}
+{"v": "1.2", "ts": "2026-08-29T08:22:15+09:00", "project": "tsugi-no-hito-ji", "loop_id": "loop_002", "event": "stage_end", "data": {"stage": 2, "stage_name": "文脈読込", "result": "pass"}}
+{"v": "1.2", "ts": "2026-08-29T08:22:15+09:00", "project": "tsugi-no-hito-ji", "loop_id": "loop_002", "event": "stage_end", "data": {"stage": 3, "stage_name": "テスト先行", "result": "skip"}}
+{"v": "1.2", "ts": "2026-08-29T08:22:16+09:00", "project": "tsugi-no-hito-ji", "loop_id": "loop_002", "event": "stage_end", "data": {"stage": 4, "stage_name": "実装", "result": "pass"}}
+{"v": "1.2", "ts": "2026-08-29T08:22:16+09:00", "project": "tsugi-no-hito-ji", "loop_id": "loop_002", "event": "stage_end", "data": {"stage": 5, "stage_name": "検証", "result": "pass"}}
+{"v": "1.2", "ts": "2026-08-29T08:22:17+09:00", "project": "tsugi-no-hito-ji", "loop_id": "loop_002", "event": "stage_end", "data": {"stage": 6, "stage_name": "文書同期", "result": "pass"}}
+{"v": "1.2", "ts": "2026-08-29T08:22:17+09:00", "project": "tsugi-no-hito-ji", "loop_id": "loop_002", "event": "stage_end", "data": {"stage": 7, "stage_name": "完了", "result": "pass"}}
+{"v": "1.2", "ts": "2026-08-29T08:22:18+09:00", "project": "tsugi-no-hito-ji", "loop_id": "loop_002", "event": "commit", "data": {"kind": "docs", "sha": "1098e40", "message": "フッタを解説アーティファクトに差し替え"}}
+{"v": "1.2", "ts": "2026-08-29T08:22:29+09:00", "project": "tsugi-no-hito-ji", "loop_id": "loop_002", "event": "loop_end", "data": {"outcome": "success", "failure_count": 0, "summary": "解説 2 本(遊び方・設計図)を発行し、フッタの 3・4 番目を差し替えて本番反映・本番検品まで完了"}}
