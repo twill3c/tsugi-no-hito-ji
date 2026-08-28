@@ -1,0 +1,1 @@
+{"v": "1.2", "ts": "2026-08-29T08:18:04+09:00", "project": "tsugi-no-hito-ji", "loop_id": "loop_002", "event": "loop_start", "data": {"goal": "解説アーティファクト(歩き方・設計図)を発行し、フリート規約フッタの 3・4 番目を GitHub リンクから差し替える", "spec_refs": ["フリート共通フッタ規約"], "scaffold_version": "1.13.0", "agent": "claude-opus-5"}}
